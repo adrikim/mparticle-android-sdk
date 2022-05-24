@@ -1,6 +1,8 @@
 package com.mparticle.lints;
 
 import com.android.tools.lint.checks.infrastructure.LintDetectorTest;
+import com.android.tools.lint.checks.infrastructure.TestFile;
+import com.android.tools.lint.checks.infrastructure.TestLintResult;
 import com.android.tools.lint.detector.api.Detector;
 import com.android.tools.lint.detector.api.Issue;
 import com.mparticle.lints.detectors.MpApiDetectorKt;
@@ -8,6 +10,7 @@ import com.mparticle.lints.detectors.MpApiDetectorKt;
 import org.intellij.lang.annotations.Language;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
@@ -196,7 +199,7 @@ public class MpApiDetectorJavaTest extends LintDetectorTest {
                         "    }\n" +
                         "    public void anotherMethod() {}\n" +
                         "}";
-        assertEquals(NO_WARNINGS, lintProject(java(source), mInitializerClass, mInitializerSubClass, mParticleStub, mApplicationStub));
+        assertEquals(NO_WARNINGS, lintProject(java(source), mInitializerClass, java(mInitializerSubClass), mParticleStub, mApplicationStub));
     }
 
     @Test
@@ -222,9 +225,10 @@ public class MpApiDetectorJavaTest extends LintDetectorTest {
                         "       MParticle.start();\n" +
                         "    }\n" +
                         "}";
-        assertThat(lintProject(java(source), mParticleStub, mApplicationStub))
-                .contains(MpApiDetectorKt.Companion.getMESSAGE_START_CALLED_IN_WRONG_PLACE())
-                .contains(Constants.getErrorWarningMessageString(0,1));
+        lint().files(java(source), mParticleStub, mApplicationStub)
+                .run()
+                .expectContains(MpApiDetectorKt.Companion.getMESSAGE_START_CALLED_IN_WRONG_PLACE())
+                .expectContains(Constants.getErrorWarningMessageString(0,1));
     }
 
     @Test
@@ -367,10 +371,16 @@ public class MpApiDetectorJavaTest extends LintDetectorTest {
                         "       MParticle.start();\n" +
                         "   }\n" +
                         "}";
-        assertThat(lintProject(java(source), mParticleStub, mApplicationStub))
-                .contains(MpApiDetectorKt.Companion.getMESSAGE_START_CALLED_IN_WRONG_PLACE())
-                .contains(MpApiDetectorKt.Companion.getMESSAGE_NO_START_CALL_AT_ALL())
-                .contains(Constants.getErrorWarningMessageString(0,2));
+        String sdkHome = (System.getenv("ANDROID_HOME") == null ? System.getProperty("user.home") : System.getenv("ANDROID_HOME")) + "/Library/Android/sdk" ;
+
+        TestLintResult result = lint()
+                .sdkHome(new File(sdkHome))
+                .files(java(source), mParticleStub, mApplicationStub)
+                .allowSystemErrors(true)
+                .run();
+        result.expectContains(MpApiDetectorKt.Companion.getMESSAGE_START_CALLED_IN_WRONG_PLACE())
+                .expectContains(MpApiDetectorKt.Companion.getMESSAGE_NO_START_CALL_AT_ALL())
+                .expectContains(Constants.getErrorWarningMessageString(0,2));
     }
 
     private TestFile mParticleStub = java("" +
@@ -396,11 +406,12 @@ public class MpApiDetectorJavaTest extends LintDetectorTest {
             "}");
 
 
-    private TestFile mInitializerSubClass = java("" +
+    @Language("JAVA")
+    private String mInitializerSubClass = "" +
             "package com.mparticle.lints;\n" +
             "import com.mparticle.MParticle;\n" +
             "public class InitializerChild extends Initializer {\n" +
-            "}");
+            "}";
 
     @Override
     protected boolean allowCompilationErrors() {

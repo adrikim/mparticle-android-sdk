@@ -11,6 +11,7 @@ import com.android.tools.lint.detector.api.Location
 import com.android.tools.lint.detector.api.Position
 import com.android.tools.lint.detector.api.Scope
 import com.android.tools.lint.detector.api.Severity
+import com.android.tools.lint.detector.api.UastLintUtils.Companion.tryResolveUDeclaration
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiTreeUtil
 import com.mparticle.lints.basedetectors.BaseDetector
@@ -24,6 +25,8 @@ import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UQualifiedReferenceExpression
 import org.jetbrains.uast.UReturnExpression
 import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.resolveToUElement
 
 class MpApiDetectorKt : BaseDetector(), Detector.UastScanner {
 
@@ -242,10 +245,7 @@ class MpApiDetectorKt : BaseDetector(), Detector.UastScanner {
      *
      */
     private fun getMethodImplementation(callExpression: UCallExpression): UExpression? {
-        return callExpression.resolve()
-            ?.let {
-                context.uastContext.getMethod(it).uastBody
-            }
+        return (callExpression.tryResolveUDeclaration() as? UMethod)?.uastBody
     }
 
     private fun isTargetMethod(targetMethodName: String, element: UCallExpression): Boolean {
@@ -253,9 +253,9 @@ class MpApiDetectorKt : BaseDetector(), Detector.UastScanner {
         if (targetMethodName.endsWith(element.methodName ?: "")) {
             // if the name matches, do the more expensive operation of resolving the method implementation,
             // and check the full qualified name
-            element.resolve()?.containingClass?.let {
-                return targetMethodName.equals("${context.uastContext.getClass(it).qualifiedName}.${element.methodName}")
-            }
+            val qualifiedClassName =
+                element.resolveToUElement()?.getContainingUClass()?.qualifiedName
+            return targetMethodName == "$qualifiedClassName.${element.methodName}"
         }
         return false
     }

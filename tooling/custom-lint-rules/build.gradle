@@ -35,14 +35,15 @@ dependencies {
     lintJar files('libs/mparticle-min.jar')
     lintJar project(':tooling:common')
     implementation configurations.lintJar
-    compileOnly 'com.android.tools.lint:lint-api:26.5.3'
-    compileOnly 'com.android.tools.lint:lint-checks:26.5.3'
-    compileOnly 'org.codehaus.groovy:groovy-all:3.0.7'
+    compileOnly 'com.android.tools.lint:lint-api:30.2.0'
+    compileOnly 'com.android.tools.lint:lint-checks:30.2.0'
+    compileOnly 'org.codehaus.groovy:groovy-all:3.0.8'
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'com.android.tools.lint:lint:26.5.3'
-    testImplementation 'com.android.tools.lint:lint-tests:26.5.3'
-    testImplementation 'com.android.tools:testutils:26.5.3'
+    testImplementation 'com.android.tools.lint:lint:30.2.0'
+    testImplementation 'com.android.tools.lint:lint-tests:30.2.0'
+    testImplementation 'com.android.tools:testutils:30.2.0'
     testImplementation 'org.easytesting:fest-assert-core:2.0M10'
+    testImplementation project(":android-core")
 }
 
 jar {

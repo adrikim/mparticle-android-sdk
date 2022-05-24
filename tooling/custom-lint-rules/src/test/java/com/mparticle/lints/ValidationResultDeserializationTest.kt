@@ -2,8 +2,8 @@ package com.mparticle.lints
 
 import com.mparticle.tooling.ValidationResult
 import org.json.JSONArray
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import kotlin.test.assertEquals
 
 class ValidationResultDeserializationTest {
 
